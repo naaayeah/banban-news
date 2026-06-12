@@ -14,6 +14,9 @@ let issuesCache = null;
 let issuesCachedAt = 0;
 const CACHE_TTL = 10 * 60 * 1000;
 
+const analyzeCache = new Map(); // topic → { data, at }
+const ANALYZE_TTL = 30 * 60 * 1000;
+
 const FALLBACK_ISSUES = {
   issues: [
     { title: '윤석열 내란 재판', gist: '12·3 비상계엄 선포로 인한 내란 혐의 재판 진행 중', leftHint: '내란 단죄, 민주주의 수호', rightHint: '정치 보복, 사법 독립 훼손', imageKeyword: 'court' },
@@ -42,9 +45,9 @@ app.get('/api/issues', async (req, res) => {
       max_tokens: 900,
       messages: [{
         role: 'user',
-        content: `한국에서 현재 여론이 크게 갈리는 정치·사회 쟁점 4개를 JSON으로만 출력해줘. 코드펜스 없이. 한국어.
+        content: `한국에서 현재 여론이 크게 갈리는 정치·사회 쟁점 6개를 JSON으로만 출력해줘. 코드펜스 없이. 한국어.
 {"issues":[{"title":"10자이내","gist":"30자이내중립설명","leftHint":"진보시각15자이내","rightHint":"보수시각15자이내","imageKeyword":"parliament|protest|economy|court|election|hospital|labor|education 중 하나"}]}
-정확히 4개.`,
+정확히 6개. 서로 다른 분야(정치,경제,사회,노동,교육,젠더 등)에서 고루 선택.`,
       }],
     });
     const text = response.content.filter(b => b.type === 'text').map(b => b.text).join('');
@@ -67,65 +70,25 @@ app.post('/api/analyze', async (req, res) => {
   res.setHeader('Connection', 'keep-alive');
   const send = (data) => res.write(`data: ${JSON.stringify(data)}\n\n`);
 
+  // 캐시 히트 → 즉시 반환
+  const cached = analyzeCache.get(topic);
+  if (cached && Date.now() - cached.at < ANALYZE_TTL) {
+    send({ type: 'status', message: '캐시에서 불러오는 중…' });
+    send({ type: 'done', data: cached.data });
+    return res.end();
+  }
+
   try {
     send({ type: 'status', message: '분석 중…' });
 
     let fullText = '';
     const stream = await client.messages.stream({
       model: MODEL,
-      max_tokens: 4000,
+      max_tokens: 2500,
       messages: [{
         role: 'user',
-        content: `당신은 한국 뉴스 양면 비교 분석 도구입니다. 이슈: "${topic}"
-진보(민주당계)와 보수(국민의힘계)가 이 이슈를 어떻게 다르게 프레이밍하는지 상세히 분석하세요.
-- 어느 쪽도 옹호 금지. 각 진영이 무엇을 강조하고 무엇을 생략하는지 분석.
-- 사실과 해석을 명확히 구분.
-- 성향 분류는 단정이 아닌 일반적 경향.
-
-아래 JSON만 출력. 코드펜스/인사 절대 금지. 한국어.
-{
-  "gist": "이 사안이 무엇인지 중립적으로 2문장",
-  "context": "이 이슈의 역사적·제도적 배경 1~2문장",
-  "left": {
-    "label": "진보 성향",
-    "headline": "진보 진영의 핵심 주장 한 문장 (신문 헤드라인 스타일)",
-    "frame": "진보 진영이 이 이슈를 바라보는 전체적 프레이밍 2문장",
-    "points": [
-      {"title": "강조점 제목", "desc": "구체적 설명 1~2문장"},
-      {"title": "강조점 제목", "desc": "구체적 설명 1~2문장"},
-      {"title": "강조점 제목", "desc": "구체적 설명 1~2문장"}
-    ],
-    "omits": "진보 진영이 잘 언급하지 않는 불편한 사실 1문장",
-    "sources": [
-      {"outlet": "언론사명", "title": "실제 기사 제목 스타일", "url": "https://example.com", "date": "2026.06"},
-      {"outlet": "언론사명", "title": "실제 기사 제목 스타일", "url": "https://example.com", "date": "2026.06"},
-      {"outlet": "언론사명", "title": "실제 기사 제목 스타일", "url": "https://example.com", "date": "2026.06"}
-    ]
-  },
-  "right": {
-    "label": "보수 성향",
-    "headline": "보수 진영의 핵심 주장 한 문장 (신문 헤드라인 스타일)",
-    "frame": "보수 진영이 이 이슈를 바라보는 전체적 프레이밍 2문장",
-    "points": [
-      {"title": "강조점 제목", "desc": "구체적 설명 1~2문장"},
-      {"title": "강조점 제목", "desc": "구체적 설명 1~2문장"},
-      {"title": "강조점 제목", "desc": "구체적 설명 1~2문장"}
-    ],
-    "omits": "보수 진영이 잘 언급하지 않는 불편한 사실 1문장",
-    "sources": [
-      {"outlet": "언론사명", "title": "실제 기사 제목 스타일", "url": "https://example.com", "date": "2026.06"},
-      {"outlet": "언론사명", "title": "실제 기사 제목 스타일", "url": "https://example.com", "date": "2026.06"},
-      {"outlet": "언론사명", "title": "실제 기사 제목 스타일", "url": "https://example.com", "date": "2026.06"}
-    ]
-  },
-  "center": {
-    "label": "중도·사실 위주",
-    "frame": "사실에 기반한 균형 시각 2문장",
-    "facts": ["핵심 사실 1", "핵심 사실 2", "핵심 사실 3"]
-  },
-  "sentiment": {"left": 42, "center": 23, "right": 35},
-  "blindspot": "양쪽 진영 모두 잘 다루지 않는 핵심 지점 2문장"
-}`,
+        content: `한국 뉴스 양면 비교. 이슈: "${topic}". JSON만 출력. 코드펜스/인사 금지. 한국어.
+{"gist":"중립 요약 1문장","context":"배경 1문장","left":{"label":"진보 성향","headline":"진보 헤드라인 1문장","frame":"진보 프레이밍 1문장","points":[{"title":"강조점","desc":"설명 1문장"},{"title":"강조점","desc":"설명 1문장"}],"omits":"진보가 생략하는 사실 1문장","sources":[{"outlet":"언론사","title":"기사제목","url":"https://example.com","date":"2026.06"},{"outlet":"언론사","title":"기사제목","url":"https://example.com","date":"2026.06"},{"outlet":"언론사","title":"기사제목","url":"https://example.com","date":"2026.06"}]},"right":{"label":"보수 성향","headline":"보수 헤드라인 1문장","frame":"보수 프레이밍 1문장","points":[{"title":"강조점","desc":"설명 1문장"},{"title":"강조점","desc":"설명 1문장"}],"omits":"보수가 생략하는 사실 1문장","sources":[{"outlet":"언론사","title":"기사제목","url":"https://example.com","date":"2026.06"},{"outlet":"언론사","title":"기사제목","url":"https://example.com","date":"2026.06"},{"outlet":"언론사","title":"기사제목","url":"https://example.com","date":"2026.06"}]},"center":{"label":"중도·사실 위주","frame":"균형 시각 1문장","facts":["사실1","사실2","사실3"]},"sentiment":{"left":42,"center":23,"right":35},"blindspot":"양쪽 모두 안 다루는 지점 1문장"}`,
       }],
     });
 
@@ -137,7 +100,9 @@ app.post('/api/analyze', async (req, res) => {
     }
 
     try {
-      send({ type: 'done', data: safeParseJSON(fullText) });
+      const parsed = safeParseJSON(fullText);
+      analyzeCache.set(topic, { data: parsed, at: Date.now() });
+      send({ type: 'done', data: parsed });
     } catch {
       send({ type: 'error', message: 'JSON 파싱 실패' });
     }
