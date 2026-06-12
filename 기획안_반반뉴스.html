@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>반반뉴스 — 서비스 기획안</title>
+<style>
+  :root {
+    --blue: #3B6EF6;
+    --blue-light: #EAF1FF;
+    --blue-mid: #C2D5FF;
+    --red: #D94C4C;
+    --red-light: #FFF0F0;
+    --red-mid: #FFD0D0;
+    --bg: #F1F2F4;
+    --card: #FFFFFF;
+    --text: #1A1A1A;
+    --sub: #5C6370;
+    --muted: #8A8F99;
+    --border: #E5E7EB;
+    --radius: 20px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+
+  /* ── 커버 ── */
+  .cover {
+    min-height: 100vh;
+    background: linear-gradient(145deg, #0A1430 0%, #1A2E6E 50%, #2A1040 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 60px 24px; text-align: center; position: relative; overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 60% 50% at 30% 50%, rgba(59,110,246,.25) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 50% at 70% 50%, rgba(217,76,76,.2) 0%, transparent 70%);
+  }
+  .cover-inner { position: relative; z-index: 1; max-width: 720px; }
+  .cover-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); border-radius: 100px; padding: 6px 16px; color: rgba(255,255,255,.8); font-size: 12px; font-weight: 600; letter-spacing: .06em; margin-bottom: 32px; }
+  .cover-badge span { width: 6px; height: 6px; border-radius: 50%; background: #4ADE80; }
+  .cover h1 { font-size: clamp(64px, 11vw, 112px); font-weight: 900; letter-spacing: -.03em; line-height: 1; margin-bottom: 16px; }
+  .cover h1 .blue { color: #7EB3FF; }
+  .cover h1 .red  { color: #FF8A8A; }
+  .cover-sub { font-size: clamp(18px, 3vw, 26px); color: rgba(255,255,255,.65); font-weight: 400; margin-bottom: 48px; line-height: 1.5; }
+  .cover-meta { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; }
+  .cover-meta-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .cover-meta-item .label { font-size: 11px; color: rgba(255,255,255,.4); letter-spacing: .08em; text-transform: uppercase; }
+  .cover-meta-item .value { font-size: 14px; color: rgba(255,255,255,.85); font-weight: 600; }
+  .cover-divider { width: 1px; height: 32px; background: rgba(255,255,255,.15); align-self: center; }
+  .cover-scroll { position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; color: rgba(255,255,255,.3); font-size: 11px; letter-spacing: .1em; }
+  .cover-scroll-line { width: 1px; height: 40px; background: linear-gradient(to bottom, rgba(255,255,255,.3), transparent); }
+
+  /* ── 레이아웃 ── */
+  .page { max-width: 960px; margin: 0 auto; padding: 80px 24px; }
+  .section { margin-bottom: 80px; }
+  .section-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--blue); margin-bottom: 12px; }
+  .section-tag::before { content: ''; width: 16px; height: 2px; background: var(--blue); border-radius: 1px; }
+  h2 { font-size: clamp(32px, 5vw, 48px); font-weight: 800; letter-spacing: -.02em; margin-bottom: 8px; line-height: 1.2; }
+  h3 { font-size: 22px; font-weight: 700; margin-bottom: 12px; }
+  .lead { font-size: 18px; color: var(--sub); line-height: 1.75; max-width: 640px; }
+  .card { background: var(--card); border-radius: var(--radius); padding: 28px; box-shadow: 0 2px 12px rgba(0,0,0,.05); }
+
+  /* ── 문제 정의 ── */
+  .problem-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 32px; }
+  .problem-card { border-radius: 16px; padding: 24px; }
+  .problem-card.left  { background: var(--blue-light); border: 1px solid var(--blue-mid); }
+  .problem-card.right { background: var(--red-light);  border: 1px solid var(--red-mid); }
+  .problem-card.center { background: #F4F5F7; border: 1px solid var(--border); }
+  .problem-card .icon { font-size: 24px; margin-bottom: 12px; }
+  .problem-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .problem-card p { font-size: 15px; color: var(--sub); line-height: 1.65; }
+
+  /* ── 핵심 기능 ── */
+  .feature-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 32px; }
+  @media (max-width: 640px) { .feature-row { grid-template-columns: 1fr; } }
+  .feature-item { border-radius: 16px; overflow: hidden; }
+  .feature-item .feat-head { padding: 20px 24px 16px; display: flex; align-items: flex-start; gap: 14px; }
+  .feature-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 18px; }
+  .feature-item .feat-body { padding: 0 24px 20px; font-size: 15px; color: var(--sub); line-height: 1.65; }
+  .feature-item .feat-tag { font-size: 11px; font-weight: 700; letter-spacing: .07em; border-radius: 100px; padding: 3px 10px; margin-bottom: 6px; display: inline-block; }
+
+  /* ── 스크린샷 목업 ── */
+  .mockup-wrap { background: #0F172A; border-radius: 24px; padding: 32px; margin-top: 32px; }
+  .mockup-bar { display: flex; gap: 6px; margin-bottom: 20px; }
+  .mockup-bar span { width: 10px; height: 10px; border-radius: 50%; }
+  .mockup-bar span:nth-child(1) { background: #FF5F57; }
+  .mockup-bar span:nth-child(2) { background: #FEBC2E; }
+  .mockup-bar span:nth-child(3) { background: #28C840; }
+  .mockup-url { flex: 1; background: rgba(255,255,255,.07); border-radius: 6px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: rgba(255,255,255,.35); margin-left: 8px; }
+  .mockup-screen { background: var(--bg); border-radius: 12px; overflow: hidden; }
+  .mockup-header { background: #fff; padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .mockup-logo { font-size: 20px; font-weight: 900; }
+  .mockup-logo .b { color: var(--blue); }
+  .mockup-logo .r { color: var(--red); }
+  .mockup-search { flex: 1; background: var(--bg); border-radius: 100px; height: 32px; display: flex; align-items: center; padding: 0 14px; font-size: 12px; color: var(--muted); }
+  .mockup-hero { background: linear-gradient(to bottom, #E5EEFF, var(--bg)); padding: 16px; }
+  .mockup-card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .mockup-issue { background: #fff; border-radius: 12px; overflow: hidden; }
+  .mockup-issue-img { height: 64px; position: relative; display: flex; align-items: flex-end; padding: 6px 8px; }
+  .mockup-issue-img::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,.6), transparent); }
+  .mockup-issue-title { font-size: 10px; font-weight: 700; color: #fff; position: relative; z-index: 1; line-height: 1.3; }
+  .mockup-issue-hints { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--border); }
+  .mockup-hint { padding: 5px 7px; }
+  .mockup-hint .dot { width: 5px; height: 5px; border-radius: 50%; display: inline-block; margin-right: 3px; vertical-align: middle; }
+  .mockup-hint .label { font-size: 8px; font-weight: 700; vertical-align: middle; }
+  .mockup-hint .text  { font-size: 8px; color: var(--sub); margin-top: 2px; line-height: 1.3; }
+  .mockup-hint + .mockup-hint { border-left: 1px solid var(--border); }
+
+  /* 모달 목업 */
+  .modal-mockup { border-radius: 16px; overflow: hidden; background: var(--bg); margin-top: 24px; }
+  .modal-hero { height: 100px; position: relative; display: flex; flex-direction: column; justify-content: flex-end; padding: 12px 16px 28px; }
+  .modal-title { font-size: 16px; font-weight: 800; color: #fff; position: relative; z-index: 1; }
+  .modal-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(59,110,246,.5), rgba(0,0,0,.2) 40%, rgba(0,0,0,.2) 60%, rgba(217,76,76,.5)); }
+  .modal-overlay2 { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,.6), transparent); }
+  .modal-nav { position: absolute; bottom: 6px; left: 0; right: 0; display: flex; align-items: center; justify-content: center; gap: 4px; z-index: 1; }
+  .modal-nav-dot { width: 5px; height: 5px; border-radius: 100px; background: rgba(255,255,255,.35); }
+  .modal-nav-dot.active { width: 16px; background: #fff; }
+  .modal-body { padding: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .modal-panel { border-radius: 12px; padding: 10px; }
+  .modal-panel.l { background: var(--blue-light); border: 1px solid var(--blue-mid); }
+  .modal-panel.r { background: var(--red-light); border: 1px solid var(--red-mid); }
+  .modal-panel-tag { font-size: 8px; font-weight: 700; padding: 2px 7px; border-radius: 100px; color: #fff; margin-bottom: 6px; display: inline-block; }
+  .modal-panel-hl { font-size: 10px; font-weight: 800; line-height: 1.4; color: var(--text); margin-bottom: 6px; }
+  .modal-panel-pt { font-size: 8px; color: var(--sub); line-height: 1.5; }
+  .modal-panel-src { margin-top: 8px; }
+  .modal-panel-src-item { background: #fff; border-radius: 6px; padding: 4px 7px; margin-bottom: 4px; font-size: 8px; color: var(--text); display: flex; align-items: center; gap: 4px; }
+
+  /* ── 사용자 여정 ── */
+  .journey { display: flex; gap: 0; margin-top: 32px; overflow-x: auto; padding-bottom: 8px; }
+  .journey-step { flex: 1; min-width: 140px; display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; }
+  .journey-step:not(:last-child)::after { content: '→'; position: absolute; right: -12px; top: 20px; font-size: 14px; color: var(--muted); }
+  .journey-circle { width: 44px; height: 44px; border-radius: 50%; background: var(--blue-light); border: 2px solid var(--blue-mid); display: flex; align-items: center; justify-content: center; font-size: 18px; margin-bottom: 10px; }
+  .journey-step h4 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .journey-step p  { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+  /* ── 수익 모델 ── */
+  .revenue-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 32px; }
+  .revenue-card { border-radius: 16px; padding: 22px; }
+  .revenue-phase { font-size: 10px; font-weight: 700; letter-spacing: .08em; margin-bottom: 8px; }
+  .revenue-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+  .revenue-card p  { font-size: 12px; color: var(--sub); line-height: 1.6; }
+  .revenue-card .amount { font-size: 22px; font-weight: 800; margin-top: 12px; }
+  .revenue-card.phase1 { background: var(--bg); border: 1px solid var(--border); }
+  .revenue-card.phase2 { background: var(--blue-light); border: 1px solid var(--blue-mid); }
+  .revenue-card.phase3 { background: linear-gradient(135deg, #0F172A, #1E3A8A); color: #fff; }
+  .revenue-card.phase3 p { color: rgba(255,255,255,.6); }
+
+  /* ── 경쟁 포지셔닝 ── */
+  .positioning { position: relative; background: var(--card); border-radius: var(--radius); padding: 32px; margin-top: 32px; overflow: hidden; }
+  .pos-axis-x { position: absolute; top: 50%; left: 24px; right: 24px; height: 1px; background: var(--border); }
+  .pos-axis-y { position: absolute; left: 50%; top: 24px; bottom: 24px; width: 1px; background: var(--border); }
+  .pos-label { position: absolute; font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: .07em; }
+  .pos-dot { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .pos-dot .circle { border-radius: 50%; }
+  .pos-dot .name { font-size: 10px; font-weight: 600; white-space: nowrap; }
+  .pos-grid-area { height: 280px; position: relative; }
+
+  /* ── 로드맵 ── */
+  .roadmap { display: flex; flex-direction: column; gap: 0; margin-top: 32px; }
+  .roadmap-row { display: grid; grid-template-columns: 100px 24px 1fr; gap: 16px; align-items: start; padding-bottom: 32px; }
+  .roadmap-row:last-child { padding-bottom: 0; }
+  .roadmap-phase-label { text-align: right; }
+  .roadmap-phase-label .phase { font-size: 11px; font-weight: 700; color: var(--blue); }
+  .roadmap-phase-label .quarter { font-size: 13px; font-weight: 800; }
+  .roadmap-line { display: flex; flex-direction: column; align-items: center; }
+  .roadmap-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--blue); border: 2px solid var(--blue-light); flex-shrink: 0; }
+  .roadmap-stem { flex: 1; width: 2px; background: linear-gradient(to bottom, var(--blue), var(--blue-mid)); min-height: 40px; margin-top: 4px; }
+  .roadmap-row:last-child .roadmap-stem { background: linear-gradient(to bottom, var(--blue-mid), transparent); }
+  .roadmap-content { padding-top: 0; }
+  .roadmap-content h4 { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .roadmap-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .roadmap-tag { font-size: 11px; background: var(--bg); border: 1px solid var(--border); border-radius: 100px; padding: 3px 10px; color: var(--sub); }
+
+  /* ── KPI ── */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-top: 32px; }
+  .kpi-card { background: var(--card); border-radius: 16px; padding: 20px; text-align: center; border: 1px solid var(--border); }
+  .kpi-card .kpi-val { font-size: 28px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+  .kpi-card .kpi-label { font-size: 11px; color: var(--muted); }
+  .kpi-card .kpi-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  /* ── 팀 ── */
+  .team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-top: 32px; }
+  .team-card { background: var(--card); border-radius: 16px; padding: 22px; border: 1px solid var(--border); }
+  .team-card .role { font-size: 10px; font-weight: 700; color: var(--blue); letter-spacing: .07em; margin-bottom: 6px; }
+  .team-card h4 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+  .team-card ul { font-size: 12px; color: var(--sub); list-style: none; display: flex; flex-direction: column; gap: 4px; }
+  .team-card ul li::before { content: '· '; color: var(--blue); }
+
+  /* ── 위험 ── */
+  .risk-table { width: 100%; border-collapse: collapse; margin-top: 32px; font-size: 15px; }
+  .risk-table th { background: var(--bg); padding: 10px 14px; text-align: left; font-size: 13px; font-weight: 700; letter-spacing: .05em; color: var(--muted); border-bottom: 2px solid var(--border); }
+  .risk-table td { padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .risk-badge { display: inline-block; border-radius: 100px; padding: 2px 10px; font-size: 12px; font-weight: 700; }
+  .risk-h { background: #FFF0F0; color: var(--red); }
+  .risk-m { background: #FFF7E0; color: #B45309; }
+  .risk-l { background: #F0FFF4; color: #16A34A; }
+
+  /* ── 마지막 ── */
+  .closing {
+    background: linear-gradient(145deg, #0A1430, #1A2E6E);
+    padding: 80px 24px; text-align: center; color: #fff;
+  }
+  .closing h2 { font-size: clamp(28px, 5vw, 48px); font-weight: 800; margin-bottom: 16px; }
+  .closing p  { font-size: 16px; color: rgba(255,255,255,.6); max-width: 520px; margin: 0 auto 40px; }
+  .closing-pills { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .closing-pill { border: 1px solid rgba(255,255,255,.2); border-radius: 100px; padding: 10px 22px; font-size: 14px; font-weight: 600; color: rgba(255,255,255,.8); }
+
+  /* ── 목차 ── */
+  .toc { position: fixed; top: 50%; right: 20px; transform: translateY(-50%); display: flex; flex-direction: column; gap: 6px; z-index: 100; }
+  .toc a { width: 6px; height: 6px; border-radius: 50%; background: rgba(0,0,0,.2); display: block; transition: all .2s; }
+  .toc a:hover, .toc a.active { background: var(--blue); width: 8px; height: 8px; }
+  @media (max-width: 768px) { .toc { display: none; } }
+
+  /* 구분선 */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 0; }
+
+  /* stat bar */
+  .stat-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .stat-label { font-size: 12px; color: var(--sub); width: 80px; flex-shrink: 0; }
+  .stat-bar-wrap { flex: 1; height: 8px; background: var(--bg); border-radius: 100px; overflow: hidden; }
+  .stat-bar { height: 100%; border-radius: 100px; }
+  .stat-val { font-size: 12px; font-weight: 700; width: 36px; text-align: right; }
+
+  /* quote */
+  .quote { border-left: 3px solid var(--blue); padding: 12px 20px; background: var(--blue-light); border-radius: 0 12px 12px 0; margin: 24px 0; }
+  .quote p { font-size: 15px; font-style: italic; color: var(--text); line-height: 1.7; }
+  .quote cite { font-size: 12px; color: var(--muted); margin-top: 6px; display: block; }
+</style>
+</head>
+<body>
+
+<!-- 목차 -->
+<nav class="toc" id="toc">
+  <a href="#cover"    title="표지"></a>
+  <a href="#problem"  title="문제 정의"></a>
+  <a href="#solution" title="솔루션"></a>
+  <a href="#feature"  title="핵심 기능"></a>
+  <a href="#ux"       title="UX 흐름"></a>
+  <a href="#roadmap"  title="로드맵"></a>
+  <a href="#risk"     title="리스크"></a>
+</nav>
+
+<!-- ════════════════════════ COVER ════════════════════════ -->
+<section class="cover" id="cover">
+  <div class="cover-inner">
+    <div class="cover-badge"><span></span> 서비스 기획안 v1.0 · 2026.06</div>
+    <h1><span class="blue">반</span><span class="red">반</span><br>뉴스</h1>
+    <p class="cover-sub">양쪽 다 듣는 뉴스<br>한국 정치·사회 이슈를 진보와 보수의 시각으로 나란히</p>
+    <div class="cover-meta">
+      <div class="cover-meta-item">
+        <span class="label">카테고리</span>
+        <span class="value">뉴스 · 미디어</span>
+      </div>
+      <div class="cover-divider"></div>
+      <div class="cover-meta-item">
+        <span class="label">플랫폼</span>
+        <span class="value">Web · Mobile Web</span>
+      </div>
+      <div class="cover-divider"></div>
+      <div class="cover-meta-item">
+        <span class="label">타겟</span>
+        <span class="value">20–40대 뉴스 소비자</span>
+      </div>
+      <div class="cover-divider"></div>
+      <div class="cover-meta-item">
+        <span class="label">기술 스택</span>
+        <span class="value">React · Node · Claude AI</span>
+      </div>
+    </div>
+  </div>
+  <div class="cover-scroll">
+    <div class="cover-scroll-line"></div>
+    SCROLL
+  </div>
+</section>
+
+<!-- ════════════════════════ PROBLEM ════════════════════════ -->
+<div class="page" id="problem">
+  <section class="section">
+    <div class="section-tag">01 · 문제 정의</div>
+    <h2>왜 우리는 같은 뉴스를<br>다르게 보게 됐는가</h2>
+    <p class="lead" style="margin-top:12px;">한국 뉴스 소비자는 자신의 성향과 일치하는 매체만 반복 구독하는 에코 챔버에 갇혀 있습니다. 같은 사안을 두고도 진보 매체와 보수 매체가 정반대의 헤드라인을 뽑는 현실에서, 독자는 '진실'이 아니라 '자기가 원하는 해석'을 소비합니다.</p>
+
+    <div class="problem-grid">
+      <div class="problem-card left">
+        <div class="icon">📰</div>
+        <h3>에코 챔버 심화</h3>
+        <p>한겨레·경향 구독자와 조선·중앙 구독자는 사실상 다른 현실을 살고 있습니다. 포털 알고리즘은 기존 성향을 강화하는 방향으로 뉴스를 추천합니다.</p>
+      </div>
+      <div class="problem-card right">
+        <div class="icon">⚡</div>
+        <h3>프레이밍 전쟁</h3>
+        <p>동일한 사건에서 진보는 'A가 B를 탄압'으로, 보수는 'B가 A를 선동'으로 프레이밍합니다. 독자는 어느 쪽이 더 정확한지 판단할 기준이 없습니다.</p>
+      </div>
+      <div class="problem-card center">
+        <div class="icon">🧩</div>
+        <h3>맥락 없는 단편 소비</h3>
+        <p>SNS 중심의 뉴스 소비로 헤드라인만 보고 공유하는 행태가 늘었습니다. 이슈의 역사적·제도적 맥락은 사라지고 감정적 반응만 남습니다.</p>
+      </div>
+    </div>
+
+    <div class="quote" style="margin-top:32px;">
+      <p>"나는 신문을 읽지 않는다. 읽는 사람보다 모르는 게 더 낫다." — 마크 트웨인</p>
+      <cite>→ 정보 과잉 시대, 문제는 '무엇을 읽느냐'가 아니라 '어떻게 읽느냐'입니다.</cite>
+    </div>
+
+    <!-- 통계 -->
+    <div class="card" style="margin-top:32px;">
+      <h3 style="margin-bottom:20px;">국내 뉴스 편향도 인식 조사</h3>
+      <div class="stat-row">
+        <span class="stat-label">에코 챔버 경험</span>
+        <div class="stat-bar-wrap"><div class="stat-bar" style="width:73%;background:#3B6EF6;"></div></div>
+        <span class="stat-val" style="color:#3B6EF6;">73%</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">반대 시각 회피</span>
+        <div class="stat-bar-wrap"><div class="stat-bar" style="width:61%;background:#7C4EF6;"></div></div>
+        <span class="stat-val" style="color:#7C4EF6;">61%</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">미디어 불신</span>
+        <div class="stat-bar-wrap"><div class="stat-bar" style="width:68%;background:#D94C4C;"></div></div>
+        <span class="stat-val" style="color:#D94C4C;">68%</span>
+      </div>
+      <div class="stat-row" style="margin-bottom:0;">
+        <span class="stat-label">양측 비교 수요</span>
+        <div class="stat-bar-wrap"><div class="stat-bar" style="width:84%;background:#16A34A;"></div></div>
+        <span class="stat-val" style="color:#16A34A;">84%</span>
+      </div>
+      <p style="font-size:11px;color:var(--muted);margin-top:14px;">* Reuters Institute Digital News Report 2025 한국 데이터 기반 추정치</p>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ════════════════════════ SOLUTION ════════════════════════ -->
+  <section class="section" id="solution" style="padding-top:80px;">
+    <div class="section-tag">02 · 솔루션</div>
+    <h2>반반뉴스<br>같은 이슈, 두 개의 렌즈</h2>
+    <p class="lead" style="margin-top:12px;">AI가 동일한 이슈에 대한 진보·보수의 프레이밍을 동시에 보여줍니다. 어느 쪽 편도 들지 않고, 각 진영이 무엇을 강조하고 무엇을 생략하는지를 투명하게 드러냅니다.</p>
+
+    <!-- 홈 화면 목업 -->
+    <div class="mockup-wrap">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+        <div class="mockup-bar"><span></span><span></span><span></span></div>
+        <div class="mockup-url">banban.news</div>
+      </div>
+      <div class="mockup-screen">
+        <div class="mockup-header">
+          <div class="mockup-logo"><span class="b">반</span><span class="r">반</span></div>
+          <div class="mockup-search">오늘의 쟁점 검색…</div>
+        </div>
+        <div class="mockup-hero">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+            <span style="background:var(--blue);color:#fff;font-size:9px;font-weight:700;border-radius:100px;padding:3px 10px;">✨ 반반뉴스</span>
+            <span style="font-size:9px;color:var(--blue);">두 시각으로 읽는 오늘의 쟁점</span>
+          </div>
+          <div class="mockup-card-grid">
+            <div class="mockup-issue">
+              <div class="mockup-issue-img" style="background:linear-gradient(135deg,#1A3060,#3B5EA6);">
+                <span class="mockup-issue-title">윤석열 내란 재판</span>
+              </div>
+              <div class="mockup-issue-hints">
+                <div class="mockup-hint"><span class="dot" style="background:#3B6EF6;"></span><span class="label" style="color:#3B6EF6;">진보</span><div class="text">내란 단죄·민주주의 수호</div></div>
+                <div class="mockup-hint"><span class="dot" style="background:#D94C4C;"></span><span class="label" style="color:#D94C4C;">보수</span><div class="text">정치 보복·사법 독립</div></div>
+              </div>
+            </div>
+            <div class="mockup-issue">
+              <div class="mockup-issue-img" style="background:linear-gradient(135deg,#1A4A2A,#3A7A5A);">
+                <span class="mockup-issue-title">차별금지법 제정</span>
+              </div>
+              <div class="mockup-issue-hints">
+                <div class="mockup-hint"><span class="dot" style="background:#3B6EF6;"></span><span class="label" style="color:#3B6EF6;">진보</span><div class="text">인권 보호 입법 시급</div></div>
+                <div class="mockup-hint"><span class="dot" style="background:#D94C4C;"></span><span class="label" style="color:#D94C4C;">보수</span><div class="text">표현의 자유 침해</div></div>
+              </div>
+            </div>
+            <div class="mockup-issue">
+              <div class="mockup-issue-img" style="background:linear-gradient(135deg,#4A2A2A,#9A5A3A);">
+                <span class="mockup-issue-title">의대 정원 확대</span>
+              </div>
+              <div class="mockup-issue-hints">
+                <div class="mockup-hint"><span class="dot" style="background:#3B6EF6;"></span><span class="label" style="color:#3B6EF6;">진보</span><div class="text">의료 공백 해소</div></div>
+                <div class="mockup-hint"><span class="dot" style="background:#D94C4C;"></span><span class="label" style="color:#D94C4C;">보수</span><div class="text">의료 질 하락 우려</div></div>
+              </div>
+            </div>
+            <div class="mockup-issue">
+              <div class="mockup-issue-img" style="background:linear-gradient(135deg,#3A1A5A,#7A3A9A);">
+                <span class="mockup-issue-title">정년 65세 연장</span>
+              </div>
+              <div class="mockup-issue-hints">
+                <div class="mockup-hint"><span class="dot" style="background:#3B6EF6;"></span><span class="label" style="color:#3B6EF6;">진보</span><div class="text">고령 노동권 보호</div></div>
+                <div class="mockup-hint"><span class="dot" style="background:#D94C4C;"></span><span class="label" style="color:#D94C4C;">보수</span><div class="text">청년 일자리 잠식</div></div>
+              </div>
+            </div>
+            <div class="mockup-issue">
+              <div class="mockup-issue-img" style="background:linear-gradient(135deg,#2A3A1A,#5A7A3A);">
+                <span class="mockup-issue-title">최저임금 인상</span>
+              </div>
+              <div class="mockup-issue-hints">
+                <div class="mockup-hint"><span class="dot" style="background:#3B6EF6;"></span><span class="label" style="color:#3B6EF6;">진보</span><div class="text">생활임금 보장</div></div>
+                <div class="mockup-hint"><span class="dot" style="background:#D94C4C;"></span><span class="label" style="color:#D94C4C;">보수</span><div class="text">중소기업 부담</div></div>
+              </div>
+            </div>
+            <div class="mockup-issue">
+              <div class="mockup-issue-img" style="background:linear-gradient(135deg,#1A3A4A,#3A6A8A);">
+                <span class="mockup-issue-title">수능 절대평가</span>
+              </div>
+              <div class="mockup-issue-hints">
+                <div class="mockup-hint"><span class="dot" style="background:#3B6EF6;"></span><span class="label" style="color:#3B6EF6;">진보</span><div class="text">경쟁 완화·공교육</div></div>
+                <div class="mockup-hint"><span class="dot" style="background:#D94C4C;"></span><span class="label" style="color:#D94C4C;">보수</span><div class="text">변별력 상실 우려</div></div>
+              </div>
+            </div>
+          </div>
+          <p style="font-size:9px;color:var(--muted);text-align:right;margin-top:8px;">탭하면 전체 분석 →</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 모달 목업 -->
+    <div style="background:#0F172A;border-radius:24px;padding:32px;margin-top:16px;">
+      <p style="color:rgba(255,255,255,.4);font-size:11px;margin-bottom:16px;letter-spacing:.05em;">▸ 카드 탭 시 — 상세 분석 모달</p>
+      <div class="modal-mockup">
+        <div class="modal-hero" style="background:linear-gradient(135deg,#2A4A9A,#5A3A8A);">
+          <div class="modal-overlay"></div>
+          <div class="modal-overlay2"></div>
+          <div class="modal-title">윤석열 내란 재판</div>
+          <div class="modal-nav">
+            <div class="modal-nav-dot"></div>
+            <div class="modal-nav-dot active"></div>
+            <div class="modal-nav-dot"></div>
+            <div class="modal-nav-dot"></div>
+            <div class="modal-nav-dot"></div>
+            <div class="modal-nav-dot"></div>
+          </div>
+        </div>
+        <div class="modal-body">
+          <div class="modal-panel l">
+            <span class="modal-panel-tag" style="background:#3B6EF6;">진보 성향</span>
+            <div class="modal-panel-hl">"헌정 파괴, 역사의 심판 받아야"</div>
+            <div class="modal-panel-pt">비상계엄 선포는 명백한 내란으로, 민주주의 수호를 위해 엄중한 단죄가 필요하다는 입장.</div>
+            <div class="modal-panel-src">
+              <div class="modal-panel-src-item"><span style="color:#3B6EF6;font-weight:700;">한겨레</span> 헌재, 탄핵 인용 이후 형사 책임…</div>
+              <div class="modal-panel-src-item"><span style="color:#3B6EF6;font-weight:700;">경향</span> 내란죄 재판, 역사적 의미는…</div>
+              <div class="modal-panel-src-item"><span style="color:#3B6EF6;font-weight:700;">MBC</span> 검찰, 징역 15년 구형 방침…</div>
+            </div>
+          </div>
+          <div class="modal-panel r">
+            <span class="modal-panel-tag" style="background:#D94C4C;">보수 성향</span>
+            <div class="modal-panel-hl">"정치적 기소, 사법 독립 훼손"</div>
+            <div class="modal-panel-pt">야당 주도의 탄핵 이후 이어진 수사는 정치 보복이며, 사법부가 정치에 종속되어선 안 된다는 주장.</div>
+            <div class="modal-panel-src">
+              <div class="modal-panel-src-item"><span style="color:#D94C4C;font-weight:700;">조선</span> "재판부 편향 의혹" 변호인단…</div>
+              <div class="modal-panel-src-item"><span style="color:#D94C4C;font-weight:700;">중앙</span> 보수 단체 법원 앞 집회…</div>
+              <div class="modal-panel-src-item"><span style="color:#D94C4C;font-weight:700;">TV조선</span> 증인 채택 두고 여야 충돌…</div>
+            </div>
+          </div>
+        </div>
+        <!-- 여론 온도계 -->
+        <div style="padding:0 14px 14px;">
+          <div style="display:flex;border-radius:100px;overflow:hidden;height:20px;">
+            <div style="width:44%;background:linear-gradient(90deg,#2549C8,#3B6EF6);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;">진보 44%</div>
+            <div style="width:21%;background:#8A8F99;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;">21%</div>
+            <div style="width:35%;background:linear-gradient(90deg,#D94C4C,#B83232);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;">보수 35%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ════════════════════════ FEATURE ════════════════════════ -->
+  <section class="section" id="feature" style="padding-top:80px;">
+    <div class="section-tag">03 · 핵심 기능</div>
+    <h2>무엇을 제공하는가</h2>
+
+    <div class="feature-row">
+      <div class="feature-item card">
+        <div class="feat-head">
+          <div class="feature-icon" style="background:var(--blue-light);">⚖️</div>
+          <div>
+            <div class="feat-tag" style="background:var(--blue-light);color:var(--blue);">CORE</div>
+            <h3 style="margin-bottom:4px;">반반 50:50 비교</h3>
+          </div>
+        </div>
+        <div class="feat-body">진보·보수 패널을 화면 좌우에 나란히 배치합니다. 헤드라인, 프레이밍, 강조점, 생략 경향을 동시에 보여줘 독자가 스스로 비교·판단할 수 있습니다.</div>
+      </div>
+      <div class="feature-item card">
+        <div class="feat-head">
+          <div class="feature-icon" style="background:#F0FFF4;">🤖</div>
+          <div>
+            <div class="feat-tag" style="background:#F0FFF4;color:#16A34A;">AI</div>
+            <h3 style="margin-bottom:4px;">Claude AI 실시간 분석</h3>
+          </div>
+        </div>
+        <div class="feat-body">Anthropic Claude가 각 이슈의 진영별 프레이밍을 스트리밍으로 생성합니다. 단순 요약이 아닌 '무엇을 강조하고 무엇을 숨기는가'를 구조화해 분석합니다.</div>
+      </div>
+      <div class="feature-item card">
+        <div class="feat-head">
+          <div class="feature-icon" style="background:#FFF7E0;">📚</div>
+          <div>
+            <div class="feat-tag" style="background:#FFF7E0;color:#B45309;">TRUST</div>
+            <h3 style="margin-bottom:4px;">근거 기사 링크 (진영별 3개)</h3>
+          </div>
+        </div>
+        <div class="feat-body">각 성향의 주장을 뒷받침하는 실제 언론사 기사를 연결합니다. AI 분석이 아닌 실제 보도를 독자가 직접 확인할 수 있어 신뢰도를 높입니다.</div>
+      </div>
+      <div class="feature-item card">
+        <div class="feat-head">
+          <div class="feature-icon" style="background:var(--red-light);">🔍</div>
+          <div>
+            <div class="feat-tag" style="background:var(--red-light);color:var(--red);">INSIGHT</div>
+            <h3 style="margin-bottom:4px;">블라인드스팟 + 중도 팩트</h3>
+          </div>
+        </div>
+        <div class="feat-body">양측 모두 잘 다루지 않는 숨겨진 논점을 '블라인드스팟'으로 제시합니다. 중도·사실 위주 섹션에서는 수치·타임라인 중심의 팩트만 정리합니다.</div>
+      </div>
+      <div class="feature-item card">
+        <div class="feat-head">
+          <div class="feature-icon" style="background:#F5F0FF;">🌡️</div>
+          <div>
+            <div class="feat-tag" style="background:#F5F0FF;color:#7C4EF6;">DATA</div>
+            <h3 style="margin-bottom:4px;">여론 온도계</h3>
+          </div>
+        </div>
+        <div class="feat-body">댓글·소셜 반응 데이터를 기반으로 진보·중도·보수 여론 비율을 시각화합니다. 현재는 AI 추정치이며 실서비스에서는 다음 뉴스 실데이터로 대체됩니다.</div>
+      </div>
+      <div class="feature-item card">
+        <div class="feat-head">
+          <div class="feature-icon" style="background:var(--bg);">🗂️</div>
+          <div>
+            <div class="feat-tag" style="background:var(--bg);color:var(--muted);">UX</div>
+            <h3 style="margin-bottom:4px;">주제 간 스와이프 네비게이션</h3>
+          </div>
+        </div>
+        <div class="feat-body">상세 분석 모달에서 ← → 버튼, 키보드 방향키, 모바일 스와이프로 다음 이슈로 바로 이동합니다. 이슈 탐색 마찰을 최소화해 체류 시간을 늘립니다.</div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ════════════════════════ UX FLOW ════════════════════════ -->
+  <section class="section" id="ux" style="padding-top:80px;">
+    <div class="section-tag">04 · 사용자 여정</div>
+    <h2>어떻게 경험하는가</h2>
+
+    <div class="journey">
+      <div class="journey-step">
+        <div class="journey-circle">🏠</div>
+        <h4>홈 진입</h4>
+        <p>오늘의 쟁점 6개<br>카드 한눈에 파악</p>
+      </div>
+      <div class="journey-step">
+        <div class="journey-circle">👁️</div>
+        <h4>진영 힌트</h4>
+        <p>카드에서 진보·보수<br>핵심 입장 미리보기</p>
+      </div>
+      <div class="journey-step">
+        <div class="journey-circle">🔎</div>
+        <h4>탭 → 분석</h4>
+        <p>AI 스트리밍<br>실시간 분석 생성</p>
+      </div>
+      <div class="journey-step">
+        <div class="journey-circle">⚖️</div>
+        <h4>50:50 비교</h4>
+        <p>헤드라인·근거·<br>생략 경향 비교</p>
+      </div>
+      <div class="journey-step">
+        <div class="journey-circle">➡️</div>
+        <h4>다음 이슈</h4>
+        <p>스와이프/버튼으로<br>연속 탐색</p>
+      </div>
+    </div>
+
+    <div style="margin-top:40px;display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="card">
+        <h3 style="font-size:14px;color:var(--muted);margin-bottom:16px;">⏱ 예상 사용 시나리오</h3>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-size:20px;width:32px;text-align:center;">☕</span>
+            <div><div style="font-size:13px;font-weight:700;">출근 전 2분</div><div style="font-size:12px;color:var(--muted);">6개 카드 스캔 → 오늘의 논쟁 파악</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-size:20px;width:32px;text-align:center;">🚇</span>
+            <div><div style="font-size:13px;font-weight:700;">출퇴근 5분</div><div style="font-size:12px;color:var(--muted);">1~2개 이슈 상세 분석 + 근거 기사 확인</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-size:20px;width:32px;text-align:center;">💬</span>
+            <div><div style="font-size:13px;font-weight:700;">논쟁 전 준비</div><div style="font-size:12px;color:var(--muted);">반대 시각 숙지 → 건설적 대화 기반 확보</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3 style="font-size:14px;color:var(--muted);margin-bottom:16px;">👥 핵심 타겟 페르소나</h3>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-size:20px;width:32px;text-align:center;">📱</span>
+            <div><div style="font-size:13px;font-weight:700;">25–35세 직장인</div><div style="font-size:12px;color:var(--muted);">"뉴스가 편향된 건 알지만 어디가 덜 편향인지 모른다"</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-size:20px;width:32px;text-align:center;">🎓</span>
+            <div><div style="font-size:13px;font-weight:700;">대학생·취준생</div><div style="font-size:12px;color:var(--muted);">"정치 이슈를 알고 싶은데 어느 편도 아니고 싶다"</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-size:20px;width:32px;text-align:center;">🗣️</span>
+            <div><div style="font-size:13px;font-weight:700;">논쟁 참여자</div><div style="font-size:12px;color:var(--muted);">"반대 의견도 이해하고 싶지만 어디서 찾아야 할지 모른다"</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ════════════════════════ ROADMAP ════════════════════════ -->
+  <section class="section" id="roadmap" style="padding-top:80px;">
+    <div class="section-tag">05 · 로드맵</div>
+    <h2>무엇을 언제 만드는가</h2>
+
+    <div class="roadmap">
+      <div class="roadmap-row">
+        <div class="roadmap-phase-label">
+          <div class="phase">MVP</div>
+          <div class="quarter">2026 Q2</div>
+        </div>
+        <div class="roadmap-line"><div class="roadmap-dot"></div><div class="roadmap-stem"></div></div>
+        <div class="roadmap-content">
+          <h4>현재 프로토타입 (완료)</h4>
+          <div class="roadmap-tags">
+            <span class="roadmap-tag">반반 비교 카드</span>
+            <span class="roadmap-tag">AI 스트리밍 분석</span>
+            <span class="roadmap-tag">주제 네비게이션</span>
+            <span class="roadmap-tag">근거 기사 링크</span>
+            <span class="roadmap-tag">여론 온도계</span>
+            <span class="roadmap-tag">다음 포털 UI</span>
+          </div>
+        </div>
+      </div>
+      <div class="roadmap-row">
+        <div class="roadmap-phase-label">
+          <div class="phase">BETA</div>
+          <div class="quarter">2026 Q3</div>
+        </div>
+        <div class="roadmap-line"><div class="roadmap-dot"></div><div class="roadmap-stem"></div></div>
+        <div class="roadmap-content">
+          <h4>실 데이터 연동 + 앱</h4>
+          <div class="roadmap-tags">
+            <span class="roadmap-tag">다음 뉴스 실데이터 연동</span>
+            <span class="roadmap-tag">댓글 여론 실시간 집계</span>
+            <span class="roadmap-tag">모바일 앱 (iOS/Android)</span>
+            <span class="roadmap-tag">알림 구독</span>
+            <span class="roadmap-tag">이슈 검색</span>
+          </div>
+        </div>
+      </div>
+      <div class="roadmap-row">
+        <div class="roadmap-phase-label">
+          <div class="phase">LAUNCH</div>
+          <div class="quarter">2026 Q4</div>
+        </div>
+        <div class="roadmap-line"><div class="roadmap-dot"></div><div class="roadmap-stem"></div></div>
+        <div class="roadmap-content">
+          <h4>Pro 구독 + 개인화</h4>
+          <div class="roadmap-tags">
+            <span class="roadmap-tag">반반 Pro 출시</span>
+            <span class="roadmap-tag">개인 성향 리포트</span>
+            <span class="roadmap-tag">이슈 아카이브</span>
+            <span class="roadmap-tag">공유 카드 생성</span>
+          </div>
+        </div>
+      </div>
+      <div class="roadmap-row">
+        <div class="roadmap-phase-label">
+          <div class="phase">SCALE</div>
+          <div class="quarter">2027 Q1</div>
+        </div>
+        <div class="roadmap-line"><div class="roadmap-dot"></div><div class="roadmap-stem"></div></div>
+        <div class="roadmap-content">
+          <h4>B2B + 글로벌</h4>
+          <div class="roadmap-tags">
+            <span class="roadmap-tag">B2B API</span>
+            <span class="roadmap-tag">학교·기업 교육 패키지</span>
+            <span class="roadmap-tag">일본어 베타 (일본 정치 이슈)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ════════════════════════ RISK ════════════════════════ -->
+  <section class="section" id="risk" style="padding-top:80px;">
+    <div class="section-tag">06 · 리스크 관리</div>
+    <h2>무엇을 조심해야 하는가</h2>
+
+    <table class="risk-table">
+      <thead>
+        <tr>
+          <th>리스크</th>
+          <th>수준</th>
+          <th>대응 방안</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>AI 환각 / 잘못된 프레이밍</strong><br><span style="color:var(--muted);font-size:11px;">Claude가 특정 진영을 잘못 분류하거나 사실과 다른 분석 생성</span></td>
+          <td><span class="risk-badge risk-h">높음</span></td>
+          <td>면책 고지 상시 표시, 실제 기사 링크 제공으로 교차검증 유도, 신고 버튼 도입</td>
+        </tr>
+        <tr>
+          <td><strong>정치적 편향 시비</strong><br><span style="color:var(--muted);font-size:11px;">'진보 편향' 또는 '보수 편향'이라는 비판</span></td>
+          <td><span class="risk-badge risk-h">높음</span></td>
+          <td>프롬프트 내 양측 동일 구조 강제, 외부 미디어 전문가 감수단 운영, 분석 근거 공개</td>
+        </tr>
+        <tr>
+          <td><strong>API 비용 급증</strong><br><span style="color:var(--muted);font-size:11px;">트래픽 증가 시 Claude API 비용이 매출보다 빠르게 증가</span></td>
+          <td><span class="risk-badge risk-m">중간</span></td>
+          <td>분석 결과 30분 캐시, 인기 이슈 사전 생성, Pro 사용자 우선 처리</td>
+        </tr>
+        <tr>
+          <td><strong>언론사 저작권</strong><br><span style="color:var(--muted);font-size:11px;">기사 제목·요약 사용으로 인한 저작권 분쟁</span></td>
+          <td><span class="risk-badge risk-m">중간</span></td>
+          <td>기사 본문 무단 복제 금지, 링크 제공 방식으로 전환, 언론사 파트너십 선제 추진</td>
+        </tr>
+        <tr>
+          <td><strong>낮은 리텐션</strong><br><span style="color:var(--muted);font-size:11px;">뉴스는 습관성 앱이나 반반은 신규 행동 유도 필요</span></td>
+          <td><span class="risk-badge risk-m">중간</span></td>
+          <td>데일리 쟁점 알림, 개인 성향 히스토리 리포트, SNS 공유 카드 생성</td>
+        </tr>
+        <tr>
+          <td><strong>네이버·다음 복제</strong><br><span style="color:var(--muted);font-size:11px;">대형 포털이 유사 기능 추가</span></td>
+          <td><span class="risk-badge risk-l">낮음</span></td>
+          <td>편집 중립성 브랜드 신뢰 선점, 커뮤니티·교육 생태계 구축으로 전환 비용 높임</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+</div>
+
+<!-- ════════════════════════ CLOSING ════════════════════════ -->
+<section class="closing">
+  <h2>같은 사실,<br>다른 해석을 나란히.</h2>
+  <p>반반은 어느 편도 들지 않습니다.<br>단지 양쪽 이야기를 동시에 들을 수 있는 자리를 만듭니다.</p>
+  <div class="closing-pills">
+    <div class="closing-pill">⚖️ 반반 비교</div>
+    <div class="closing-pill">🤖 Claude AI</div>
+    <div class="closing-pill">📰 근거 기사</div>
+    <div class="closing-pill">🌡️ 여론 온도계</div>
+    <div class="closing-pill">🔍 블라인드스팟</div>
+  </div>
+  <p style="margin-top:40px;font-size:13px;color:rgba(255,255,255,.25);">banban.news · 기획안 v1.0 · 2026.06 · Confidential</p>
+</section>
+
+<script>
+  // 목차 활성화
+  const sections = document.querySelectorAll('[id]');
+  const tocLinks = document.querySelectorAll('.toc a');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        tocLinks.forEach(a => a.classList.remove('active'));
+        const active = document.querySelector(`.toc a[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { threshold: 0.3 });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

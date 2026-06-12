@@ -23,6 +23,8 @@ const FALLBACK_ISSUES = {
     { title: '차별금지법 제정', gist: '성적 지향 등을 포함한 포괄적 차별금지법 제정 논의', leftHint: '보편적 인권 보호 입법 시급', rightHint: '종교·표현의 자유 침해 우려', imageKeyword: 'parliament' },
     { title: '정년 65세 연장', gist: '법정 정년을 현행 60세에서 65세로 연장하는 방안 논의', leftHint: '고령 노동권 보호, 연장 필요', rightHint: '청년 일자리 잠식, 역효과', imageKeyword: 'labor' },
     { title: '의대 정원 확대', gist: '정부의 의대 정원 증원 방침에 의료계가 반발 중', leftHint: '의료 공백 해소, 확대 지지', rightHint: '의료 질 하락, 철회 요구', imageKeyword: 'hospital' },
+    { title: '최저임금 인상', gist: '내년 최저임금을 둘러싼 노사 간 입장 차이가 큰 상황', leftHint: '생활임금 보장, 대폭 인상', rightHint: '중소기업 부담, 속도 조절', imageKeyword: 'labor' },
+    { title: '수능 절대평가', gist: '수능 전 과목 절대평가 전환 여부를 두고 논란이 지속', leftHint: '경쟁 완화, 공교육 정상화', rightHint: '변별력 상실, 대입 혼란', imageKeyword: 'education' },
   ],
 };
 
