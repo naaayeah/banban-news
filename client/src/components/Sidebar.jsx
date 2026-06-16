@@ -29,12 +29,12 @@ export default function Sidebar() {
       {/* Profile card */}
       <div className="bg-white rounded-card shadow-card p-5">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#3B6EF6] to-[#E84EAA] flex items-center justify-center text-white font-bold">시</div>
-          <div>
-            <p className="text-sm font-bold">시에나님</p>
-            <p className="text-xs text-gray-400">siena@kakao.com</p>
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#3B6EF6] to-[#E84EAA] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">반</div>
+          <div className="min-w-0">
+            <p className="text-sm font-bold">반반이님</p>
+            <p className="text-xs text-gray-400 truncate">banban@news.com</p>
           </div>
-          <button className="ml-auto text-xs text-gray-400 hover:text-gray-600">로그아웃</button>
+          <button className="ml-auto text-xs text-gray-400 hover:text-gray-600 flex-shrink-0">로그아웃</button>
         </div>
         <div className="flex gap-2">
           {['✉️ 메일', '☕ 카페', '👤 MY'].map(label => (
